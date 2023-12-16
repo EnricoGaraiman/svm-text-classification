@@ -1,4 +1,5 @@
 import collections
+import time
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
@@ -22,6 +23,8 @@ def prepare_dataset(ARGUMENTS):
         return prepare_dataset_bbc(ARGUMENTS)
     elif ARGUMENTS['dataset'] == 'reuters':
         return prepare_dataset_reuters(ARGUMENTS)
+    elif ARGUMENTS['dataset'] == 'ag_news':
+        return prepare_dataset_ag_news(ARGUMENTS)
 
     raise Exception('Not supporting dataset')
 
@@ -42,7 +45,7 @@ def prepare_dataset_bbc(ARGUMENTS):
     n_texts = len(texts)
     print('Texts in dataset: %d' % n_texts)
 
-    categories = utils.get_categories(df)
+    categories = utils.get_categories(df, 'category')
     print('Number of categories: %d' % len(categories))
 
     texts_train, texts_test, labels_train, labels_test = train_test_split(texts,
@@ -86,9 +89,6 @@ def prepare_dataset_reuters(ARGUMENTS):
     labels_train_raw_flattened = [label for sublist in labels_train_raw for label in sublist]
     labels_test_raw_flattened = [label for sublist in labels_test_raw for label in sublist]
 
-    # labels_train_raw_flattened = [sublist[0] for sublist in labels_train_raw]
-    # labels_test_raw_flattened = [sublist[0] for sublist in labels_test_raw]
-
     plot_dataset_distribution(labels_train_raw_flattened + labels_test_raw_flattened)
 
     # transform multilabel labels
@@ -109,13 +109,49 @@ def prepare_dataset_reuters(ARGUMENTS):
             set(labels_train_raw_flattened + labels_test_raw_flattened)]
 
 
+def prepare_dataset_ag_news(ARGUMENTS):
+    """
+    Prepare dataset (AG News)
+
+    :param ARGUMENTS: arguments dict   :type ARGUMENTS: dict
+    :return: train & test data and labels   :rtype: list
+    """
+    df_train = pd.read_csv(ARGUMENTS['dataset_path'] + '/train.csv')
+    df_test = pd.read_csv(ARGUMENTS['dataset_path'] + '/test.csv')
+
+    df_train['text'] = (df_train['Title'] + df_train['Description'])
+    df_test['text'] = (df_test['Title'] + df_test['Description'])
+
+    texts_train = df_train[['text']].to_numpy().reshape(-1)
+    labels_train = df_train[['Class Index']].to_numpy().reshape(-1)
+
+    texts_test = df_test[['text']].to_numpy().reshape(-1)
+    labels_test = df_test[['Class Index']].to_numpy().reshape(-1)
+
+    n_texts = len(texts_train) + len(texts_test)
+    print('Texts in dataset: %d' % n_texts)
+
+    categories = utils.get_categories(df_train, 'Class Index')
+    print('Number of categories: %d' % len(categories))
+
+    # vectorizer to convert the text into numerical features
+    [texts_train, texts_test] = fit_vectorizer(ARGUMENTS, texts_train, texts_test)
+
+    plot_dataset_distribution(pd.concat([df_train, df_test], ignore_index=True)['Class Index'])
+
+    print('Train size:', np.shape(texts_train))
+    print('Test size:', np.shape(texts_test))
+
+    return [texts_train, texts_test, labels_train, labels_test, categories]
+
+
 def fit_vectorizer(ARGUMENTS, train_docs, test_docs):
     """
     Fit & transform dataset train and test
 
     :param ARGUMENTS: arguments dict   :type ARGUMENTS: dict
     :param train_docs: list of documents for training   :type ARGUMENTS: list
-    :param train_docs: list of documents for testing   :type ARGUMENTS: list
+    :param test_docs: list of documents for testing   :type ARGUMENTS: list
     :return: train & test data   :rtype: list
     """
     vectorizer = None
@@ -127,8 +163,10 @@ def fit_vectorizer(ARGUMENTS, train_docs, test_docs):
     if vectorizer is None:
         raise Exception('Not supporting vectorizer')
 
+    start_time = time.time()
     texts_train = vectorizer.fit_transform(train_docs)
     texts_test = vectorizer.transform(test_docs)
+    print('Vectorizer processing time: {}'.format(time.time() - start_time))
 
     return [texts_train, texts_test]
 

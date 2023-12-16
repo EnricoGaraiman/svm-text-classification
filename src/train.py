@@ -4,7 +4,7 @@ from matplotlib import pyplot as plt
 from sklearn.metrics import classification_report, confusion_matrix
 from sklearn.model_selection import GridSearchCV
 from sklearn.multiclass import OneVsRestClassifier
-from sklearn.svm import SVC, LinearSVC
+from sklearn.svm import SVC
 import time
 import pandas as pd
 import src.utils as utils
@@ -58,6 +58,7 @@ def testing_stage(ARGUMENTS, model, text_test, labels_test):
     :param model: SVM model   :type model: SVM object
     :param text_test: data for test   :type text_test: list
     :param labels_test: labels for test   :type labels_test: list
+    :return labels_pred: labels from prediction   :type labels_test: list
     """
     # calculate accuracy
     labels_pred = model.predict(text_test)
@@ -71,6 +72,8 @@ def testing_stage(ARGUMENTS, model, text_test, labels_test):
     # save confusion matrix
     if ARGUMENTS['dataset'] != 'reuters':
         plot_confusion_matrix(text_test, labels_test, model)
+
+    return labels_pred
 
 
 def save_model(model):
@@ -91,9 +94,9 @@ def plot_confusion_matrix(text_test, labels_test, model):
     :param labels_test: labels for test   :type labels_test: list
     :param model: SVM model   :type model: SVM object
     """
-    Y_pred = model.predict(text_test)
+    labels_pred = model.predict(text_test)
 
-    con_mat = confusion_matrix(labels_test, Y_pred)
+    con_mat = confusion_matrix(labels_test, labels_pred)
     con_mat_norm = np.around(con_mat.astype('float') / con_mat.sum(axis=1)[:, np.newaxis], decimals=2)
 
     label_names = list(range(len(con_mat_norm)))
