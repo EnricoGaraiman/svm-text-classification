@@ -38,21 +38,16 @@ if __name__ == '__main__':
     concat = 'estimator__' if ARGUMENTS['dataset'] == 'reuters' else ''
     tuned_parameters = [
         {
-            concat + 'kernel': ['poly'],
-            concat + 'degree': [2, 3, 4],
-            concat + 'C': [0.1, 1, 2, 3, 5, 10, 50]
-        },
-        {
             concat + 'kernel': ['rbf', 'poly', 'sigmoid'],
             concat + 'gamma': ['scale', 'auto', 1e-2, 1e-3, 1e-4],
             concat + 'C': [0.1, 1, 2, 3, 5, 10, 50]
         },
         {
-            concat + 'kernel': ['linear'],
+            concat + 'kernel': ['linear', 'poly'],
             concat + 'C': [0.1, 1, 2, 3, 5, 10, 50]
         }
         # {
-        #     concat + 'kernel': ['rbf'],
+        #     concat + 'kernel': ['linear'],
         #     concat + 'gamma': ['auto'],
         #     concat + 'C': [0.1, 1, 2, 10]
         # },
@@ -61,4 +56,4 @@ if __name__ == '__main__':
     [texts_train, texts_test, labels_train, labels_test, categories] = dataset.prepare_dataset(ARGUMENTS)
 
     model = train.training_stage(ARGUMENTS, tuned_parameters, texts_train, labels_train)
-    train.testing_stage(ARGUMENTS, model, texts_test, labels_test)
+    train.testing_stage(ARGUMENTS, model, texts_test, labels_test, categories)

@@ -1,14 +1,13 @@
 import pickle
-import numpy as np
 from matplotlib import pyplot as plt
-from sklearn.metrics import classification_report, confusion_matrix
+from sklearn.metrics import classification_report, confusion_matrix, ConfusionMatrixDisplay
 from sklearn.model_selection import GridSearchCV
 from sklearn.multiclass import OneVsRestClassifier
+from sklearn.preprocessing import LabelEncoder
 from sklearn.svm import SVC
 import time
 import pandas as pd
 import src.utils as utils
-import seaborn as sns
 
 
 def training_stage(ARGUMENTS, tuned_parameters, texts_train, labels_train):
@@ -50,7 +49,7 @@ def training_stage(ARGUMENTS, tuned_parameters, texts_train, labels_train):
     return model
 
 
-def testing_stage(ARGUMENTS, model, text_test, labels_test):
+def testing_stage(ARGUMENTS, model, text_test, labels_test, categories):
     """
     SVM Testing Stage
 
@@ -58,6 +57,7 @@ def testing_stage(ARGUMENTS, model, text_test, labels_test):
     :param model: SVM model   :type model: SVM object
     :param text_test: data for test   :type text_test: list
     :param labels_test: labels for test   :type labels_test: list
+    :param categories: categories   :type categories: list
     :return labels_pred: labels from prediction   :type labels_test: list
     """
     # calculate accuracy
@@ -71,7 +71,7 @@ def testing_stage(ARGUMENTS, model, text_test, labels_test):
 
     # save confusion matrix
     if ARGUMENTS['dataset'] != 'reuters':
-        plot_confusion_matrix(text_test, labels_test, model)
+        plot_confusion_matrix(text_test, labels_test, model, categories)
 
     return labels_pred
 
@@ -86,26 +86,28 @@ def save_model(model):
         pickle.dump(model, fp, protocol=pickle.HIGHEST_PROTOCOL)
 
 
-def plot_confusion_matrix(text_test, labels_test, model):
+def plot_confusion_matrix(text_test, labels_test, model, categories):
     """
     Plot & save confusion matrix
 
     :param text_test: data for test   :type text_test: list
     :param labels_test: labels for test   :type labels_test: list
+    :param categories: categories   :type categories: list
     :param model: SVM model   :type model: SVM object
     """
     labels_pred = model.predict(text_test)
+    labels = list(range(0, len(categories)))
 
-    con_mat = confusion_matrix(labels_test, labels_pred)
-    con_mat_norm = np.around(con_mat.astype('float') / con_mat.sum(axis=1)[:, np.newaxis], decimals=2)
+    label_encoder = LabelEncoder()
+    labels_test = label_encoder.fit_transform(labels_test)
+    labels_pred = label_encoder.transform(labels_pred)
 
-    label_names = list(range(len(con_mat_norm)))
-    con_mat_df = pd.DataFrame(con_mat_norm,
-                              index=label_names,
-                              columns=label_names)
+    cmx = confusion_matrix(labels_test, labels_pred, labels=labels, normalize='true')
+    disp = ConfusionMatrixDisplay(confusion_matrix=cmx, display_labels=categories)
 
-    fig = plt.figure(figsize=(10, 10), dpi=300)
-    sns.heatmap(con_mat_df, cmap=plt.cm.Blues, annot=True)
-    plt.ylabel('True label')
-    plt.xlabel('Predicted label')
+    fig, ax = plt.subplots(figsize=(10, 10), dpi=300)
+    fig.suptitle('Confusion Matrix', fontsize=20)
+    plt.xlabel('True label', fontsize=16)
+    plt.ylabel('Predicted label', fontsize=16)
+    disp.plot(ax=ax, xticks_rotation=0, colorbar=True)
     plt.savefig('runs/' + utils.get_next_run_director_name() + '/confusion-matrix.jpg', dpi=fig.dpi)

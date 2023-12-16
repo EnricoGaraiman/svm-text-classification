@@ -33,7 +33,7 @@ def get_next_run_director_name():
     if len(dirs) == 0:
         return 'run-1'
     else:
-        if len(glob.glob(dirs[-1] + '/scatter-plot.jpg')) == 0:
+        if len(glob.glob(dirs[-1] + '/confusion-matrix.jpg')) == 0:
             return 'run-' + str(int(dirs[-1].split('\\')[-1].split('-')[-1]))
         return 'run-' + str(int(dirs[-1].split('\\')[-1].split('-')[-1]) + 1)
 
