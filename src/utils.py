@@ -2,8 +2,14 @@ import glob
 import json
 import os
 import pprint
-
+import re
 from matplotlib import pyplot as plt
+import spacy
+from nltk import word_tokenize, PorterStemmer
+from nltk.corpus import stopwords
+
+nlp = spacy.load("en_core_web_md")
+cachedStopWords = stopwords.words("english")
 
 
 def get_categories(df):
@@ -31,23 +37,23 @@ def get_next_run_director_name():
         return 'run-' + str(int(dirs[-1].split('\\')[-1].split('-')[-1]) + 1)
 
 
-def save_parameters(PARAMETERS):
+def save_parameters(ARGUMENTS):
     """
-    Save training parameters
+    Save training ARGUMENTS
 
-    :param PARAMETERS: arguments dict    :type PARAMETERS: dict
+    :param ARGUMENTS: arguments dict    :type ARGUMENTS: dict
     """
     print('\n')
-    print('PARAMETERS: ')
-    pprint.pprint(PARAMETERS)
+    print('ARGUMENTS: ')
+    pprint.pprint(ARGUMENTS)
     print('\n')
 
     dir_name = get_next_run_director_name()
     if not os.path.isdir('runs/' + dir_name):
         os.mkdir('runs/' + dir_name)
 
-    with open('runs/' + get_next_run_director_name() + '/PARAMETERS.pkl', 'w') as convert_file:
-        convert_file.write(json.dumps(PARAMETERS))
+    with open('runs/' + get_next_run_director_name() + '/ARGUMENTS.pkl', 'w') as convert_file:
+        convert_file.write(json.dumps(ARGUMENTS))
 
 
 def add_labels(x, y):
@@ -59,3 +65,21 @@ def add_labels(x, y):
     """
     for i in range(len(x)):
         plt.text(i, y[i] + 0.2, "{:.2f}".format(y[i]) + ' %', ha='center', fontsize=16)
+
+
+def tokenize(text):
+    """
+    Tokenize text
+
+    :param text: text    :type x: string
+    :return y: filtered tokens     :rtype y: list
+    """
+    min_length = 3
+    words = map(lambda word: word.lower(), word_tokenize(text))
+    words = [word for word in words if word not in cachedStopWords]
+    tokens = (list(map(lambda token: PorterStemmer().stem(token), words)))
+    p = re.compile('[a-zA-Z]+')
+    filtered_tokens = list(filter(lambda token:
+                                  p.match(token) and len(token) >= min_length,
+                                  tokens))
+    return filtered_tokens
