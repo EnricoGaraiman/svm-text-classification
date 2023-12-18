@@ -1,3 +1,5 @@
+import os
+
 import src.dataset as dataset
 import src.utils as utils
 import src.train as train
@@ -30,7 +32,9 @@ if __name__ == '__main__':
         'vectorizer': args.vectorizer if args.vectorizer is not None else 'tfidf',
     }
 
-    utils.save_parameters(ARGUMENTS)
+    dir_name = utils.get_next_run_director_name()
+    if not os.path.isdir('runs/' + dir_name):
+        os.mkdir('runs/' + dir_name)
 
     """
        SVM
@@ -38,22 +42,14 @@ if __name__ == '__main__':
     concat = 'estimator__' if ARGUMENTS['dataset'] == 'reuters' else ''
     tuned_parameters = [
         {
-            concat + 'kernel': ['rbf', 'poly', 'sigmoid'],
-            concat + 'gamma': ['scale', 'auto', 1e-2, 1e-3, 1e-4],
-            concat + 'C': [0.1, 1, 2, 3, 5, 10, 50]
+            concat + 'kernel': ['linear'],
+            concat + 'gamma': ['auto'],
+            concat + 'C': [0.1, 0.5, 1, 2, 5, 10]
         },
-        {
-            concat + 'kernel': ['linear', 'poly'],
-            concat + 'C': [0.1, 1, 2, 3, 5, 10, 50]
-        }
-        # {
-        #     concat + 'kernel': ['linear'],
-        #     concat + 'gamma': ['auto'],
-        #     concat + 'C': [0.1, 1, 2, 10]
-        # },
     ]
 
     [texts_train, texts_test, labels_train, labels_test, categories] = dataset.prepare_dataset(ARGUMENTS)
 
     model = train.training_stage(ARGUMENTS, tuned_parameters, texts_train, labels_train)
     train.testing_stage(ARGUMENTS, model, texts_test, labels_test, categories)
+    utils.save_parameters(ARGUMENTS)

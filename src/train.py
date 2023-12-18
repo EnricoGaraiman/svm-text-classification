@@ -1,4 +1,5 @@
 import pickle
+import numpy as np
 from matplotlib import pyplot as plt
 from sklearn.metrics import classification_report, confusion_matrix, ConfusionMatrixDisplay
 from sklearn.model_selection import GridSearchCV
@@ -9,6 +10,7 @@ import time
 import pandas as pd
 import src.utils as utils
 
+np.random.seed(101)
 
 def training_stage(ARGUMENTS, tuned_parameters, texts_train, labels_train):
     """
@@ -31,7 +33,7 @@ def training_stage(ARGUMENTS, tuned_parameters, texts_train, labels_train):
         tuned_parameters,
         cv=ARGUMENTS['k_grid'],
         scoring='precision_weighted',
-        verbose=2,
+        verbose=3,
         n_jobs=-1,
         error_score='raise'
     )
