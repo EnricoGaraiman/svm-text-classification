@@ -2,12 +2,10 @@ import pickle
 import numpy as np
 from matplotlib import pyplot as plt
 from sklearn.metrics import classification_report, confusion_matrix, ConfusionMatrixDisplay
-from sklearn.model_selection import GridSearchCV
 from sklearn.multiclass import OneVsRestClassifier
 from sklearn.preprocessing import LabelEncoder
 from sklearn.svm import SVC
 import time
-import pandas as pd
 import src.utils as utils
 
 np.random.seed(101)
@@ -21,32 +19,22 @@ def training_stage(ARGUMENTS, tuned_parameters, texts_train, labels_train):
     :param labels_train: labels for train   :type labels_train: list
     :return: SVM model    :rtype:  SVM object
     """
-    if ARGUMENTS['dataset'] == 'reuters':
-        clf = OneVsRestClassifier(SVC(random_state=101))
-    else:
-        clf = SVC(random_state=101)
-
-    # K Cross validation
-    start_time = time.time()
-    model = GridSearchCV(
-        clf,
-        tuned_parameters,
-        cv=ARGUMENTS['k_grid'],
-        scoring='precision_weighted',
-        verbose=3,
-        n_jobs=-1,
-        error_score='raise'
+    clf = SVC(
+        C=tuned_parameters['C'],
+        kernel=tuned_parameters['kernel'],
+        gamma=tuned_parameters['gamma'],
+        tol=1e-5,
+        random_state=101,
     )
+
+    if ARGUMENTS['dataset'] == 'reuters':
+        model = OneVsRestClassifier(clf)
+    else:
+        model = clf
+
+    start_time = time.time()
     model.fit(texts_train, labels_train)
-
-    print('Cross validation time: {}'.format(time.time() - start_time))
-    print('Best parameters set found on development set:')
-    print(model.best_params_)
-
-    # save results for K Cross validation
-    cv_result = pd.DataFrame.from_dict(model.cv_results_)
-    with open('runs/' + utils.get_next_run_director_name() + '/cross_validation_result.csv', 'w') as f:
-        cv_result.to_csv(f)
+    print('Training time: {}'.format(time.time() - start_time))
 
     return model
 
@@ -63,7 +51,9 @@ def testing_stage(ARGUMENTS, model, text_test, labels_test, categories):
     :return labels_pred: labels from prediction   :type labels_test: list
     """
     # calculate accuracy
+    start_time = time.time()
     labels_pred = model.predict(text_test)
+    print('Testing time: {}'.format(time.time() - start_time))
 
     print('\nClassification report:')
     print(classification_report(labels_test, labels_pred, digits=4))

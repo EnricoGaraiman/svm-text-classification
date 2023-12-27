@@ -8,7 +8,6 @@ import spacy
 from nltk import word_tokenize, PorterStemmer
 from nltk.corpus import stopwords
 
-nlp = spacy.load("en_core_web_md")
 cachedStopWords = stopwords.words("english")
 
 

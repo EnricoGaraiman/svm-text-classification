@@ -18,8 +18,11 @@ if __name__ == '__main__':
     parser.add_argument('--dataset_path', type=str, help='Dataset path (bbc required)')
     parser.add_argument('--download_dataset', type=bool, help='Dataset will be downloaded (default False)')
     parser.add_argument('--test_split', type=float, help='Dataset test split (bbc required | default 0.2)')
-    parser.add_argument('--k_grid', type=int, help='K Cross validation (default 5)')
     parser.add_argument('--vectorizer', type=str, help='Vectorizer type (default tfidf)')
+    parser.add_argument('--kernel', type=str, help='SVM kernel (default rbf)')
+    parser.add_argument('--gamma', type=str, help='SVM gamma (default auto)')
+    parser.add_argument('--c', type=float, help='SVM C (default 1)')
+    parser.add_argument('--features', type=int, help='Vectorizer features (default 3000)')
 
     args = parser.parse_args()
 
@@ -28,8 +31,11 @@ if __name__ == '__main__':
         'dataset_path': args.dataset_path if args.dataset_path is not None else '',
         'download_dataset': args.download_dataset if args.download_dataset is not None else False,
         'test_split': args.test_split if args.test_split is not None else 0.2,
-        'k_grid': args.k_grid if args.k_grid is not None else 5,
         'vectorizer': args.vectorizer if args.vectorizer is not None else 'tfidf',
+        'kernel': args.kernel if args.kernel is not None else 'linear',
+        'gamma': args.gamma if args.gamma is not None else 'auto',
+        'c': args.c if args.c is not None else 1,
+        'features': args.features if args.features is not None else 3000
     }
 
     dir_name = utils.get_next_run_director_name()
@@ -39,14 +45,11 @@ if __name__ == '__main__':
     """
        SVM
     """
-    concat = 'estimator__' if ARGUMENTS['dataset'] == 'reuters' else ''
-    tuned_parameters = [
-        {
-            concat + 'kernel': ['linear'],
-            concat + 'gamma': ['auto'],
-            concat + 'C': [0.1, 0.5, 1, 2, 5, 10]
-        },
-    ]
+    tuned_parameters = {
+        'kernel': ARGUMENTS['kernel'],
+        'gamma': ARGUMENTS['gamma'],
+        'C': ARGUMENTS['c']
+    }
 
     [texts_train, texts_test, labels_train, labels_test, categories] = dataset.prepare_dataset(ARGUMENTS)
 

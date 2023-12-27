@@ -156,10 +156,20 @@ def fit_vectorizer(ARGUMENTS, train_docs, test_docs):
     """
     vectorizer = None
     if ARGUMENTS['vectorizer'] == 'count':
-        vectorizer = CountVectorizer(strip_accents=None, lowercase=False)
+        vectorizer = CountVectorizer(strip_accents=None,
+                                     lowercase=True,
+                                     min_df=3,
+                                     max_df=0.99,
+                                     max_features=ARGUMENTS['features'],
+                                     stop_words='english')
     elif ARGUMENTS['vectorizer'] == 'tfidf':
-        vectorizer = TfidfVectorizer(tokenizer=utils.tokenize, token_pattern=None, min_df=3, max_df=0.90,
-                                     max_features=1000, use_idf=True, sublinear_tf=True)
+        vectorizer = TfidfVectorizer(tokenizer=utils.tokenize,
+                                     token_pattern=None,
+                                     min_df=3,
+                                     max_df=0.99,
+                                     max_features=ARGUMENTS['features'],
+                                     use_idf=True,
+                                     sublinear_tf=True)
 
     if vectorizer is None:
         raise Exception('Not supporting vectorizer')
